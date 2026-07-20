@@ -1,0 +1,152 @@
+# Unified Asset & Operations Brain 🏭🧠
+**Industrial Knowledge Intelligence Platform**
+
+An enterprise-grade, agentic AI platform designed to ingest heterogeneous industrial documents (P&IDs, SOPs, Maintenance Logs, IoT Data) and convert them into a continuously evolving operational knowledge system.
+
+## 🚀 Key Innovations
+1. **Hybrid Graph-RAG**: Fuses vector embeddings with an Industrial Knowledge Graph (Neo4j) based on ISA-95 ontology.
+2. **Agentic Swarm Orchestration**: A Semantic Router delegates tasks to specialized RCA, Compliance, and Maintenance agents.
+3. **Action Engine (Human-in-the-Loop)**: AI doesn't just chat; it drafts ERP Work Orders and pauses for human approval.
+4. **Adversarial Critic Validation**: A secondary agent verifies citations against the graph to eliminate hallucinations.
+5. **Time-Series Fusion**: Cross-references static engineering manuals with real-time IoT/SCADA streams.
+
+---
+
+## 🏗️ System Architecture
+
+### 1. High-Level ASCII Architecture
+```text
+[Mobile App]   [Web Dashboard]   [ERP/CMMS SAP]   [IoT/SCADA MQTT]
+      |               |                 |                 |
+      +-------+-------+                 +--------+--------+
+              |                                  |
+      [ API GATEWAY & RBAC ]             [ EVENT BUS (KAFKA) ]
+              |                                  |
+      +-------+-------+--------------------------+
+      |               |                          |
+[ SUPERVISOR  ]  [ ACTION / WORKFLOW ]    [ INGESTION PIPELINE ]
+[ ROUTER AGENT]  [ ENGINE (HITL)     ]    [ - OCR / Vision     ]
+      |               |                   [ - Graph Extraction ]
+      +---------------+--------------------------+
+                      |                          |
+             [ AGENTIC SWARM ]            [ UNIFIED KNOWLEDGE ]
+             /        |      \            - Vector DB (Milvus)
+    [RCA Agent] [Compliance] [Maint.]     - Graph DB (Neo4j)
+             \        |      /            - Time-Series (InfluxDB)
+              [ CRITIC AGENT ]            - Semantic Cache
+                      |
+           [ EXPLAINABILITY ENGINE ]
+```
+
+### 2. Detailed Component Flow (Mermaid)
+
+```mermaid
+graph TD
+    subgraph Client Layer
+        M[Mobile Field Assistant]
+        W[Web Dashboard]
+    end
+
+    subgraph Integration Layer
+        API[API Gateway / IAM]
+        ERP[ERP / CMMS - 2-Way]
+        IOT[IoT / SCADA Streams]
+    end
+
+    subgraph Event & Streaming Layer
+        KAFKA[Event Bus / Kafka]
+    end
+
+    subgraph Ingestion & Processing Pipeline
+        DOC[Doc Ingestion Engine]
+        OCR[Vision / P&ID Parser]
+        ENT[Entity / Relation Extraction]
+    end
+
+    subgraph Unified Knowledge Layer
+        VEC[(Vector Index)]
+        GRAPH[(Knowledge Graph)]
+        TSDB[(Time-Series DB)]
+        CACHE[(Semantic Cache)]
+    end
+
+    subgraph Agentic Intelligence Layer
+        SUP[Supervisor / Router Agent]
+        RCA[RCA Agent]
+        COMP[Compliance Agent]
+        MAINT[Maintenance Agent]
+        CRITIC[Critic / Validation Agent]
+    end
+
+    subgraph Action & Governance Layer
+        HITL[Action Engine / HITL]
+        EVOLVE[Knowledge Evolution]
+        OBS[Observability / Audit]
+    end
+
+    M & W --> API
+    API --> SUP
+    API --> HITL
+    
+    ERP & IOT --> KAFKA
+    KAFKA --> DOC
+    KAFKA --> TSDB
+    
+    DOC --> OCR
+    OCR --> ENT
+    ENT --> VEC
+    ENT --> GRAPH
+    
+    SUP --> CACHE
+    SUP --> RCA & COMP & MAINT
+    RCA & COMP & MAINT --> GRAPH & VEC & TSDB
+    RCA & COMP & MAINT --> CRITIC
+    
+    CRITIC --> EVOLVE
+    EVOLVE --> GRAPH
+    HITL --> ERP
+```
+
+---
+
+## ⚙️ Component Dependency Graph
+
+```mermaid
+graph LR
+    UserQuery --> Gateway
+    Gateway --> SemanticCache
+    SemanticCache --Miss--> SupervisorAgent
+    SupervisorAgent --> PlanningModule
+    PlanningModule --> WorkerAgents
+    WorkerAgents --> GraphRetriever
+    WorkerAgents --> VectorRetriever
+    WorkerAgents --> TimeSeriesQuery
+    GraphRetriever --> Neo4j
+    VectorRetriever --> VectorDB
+    WorkerAgents --> CriticAgent
+    CriticAgent --> OutputGenerator
+    OutputGenerator --> ActionEngine
+    ActionEngine --Approval Needed--> HITL
+    HITL --> APIExecution
+```
+
+---
+
+## 🔄 End-to-End Request Flow
+1. **User Query**: "Why is Pump P-102 overheating, and how do I fix it?"
+2. **Routing**: Supervisor Agent intercepts the query.
+3. **Planning & Delegation**: 
+    - *Task 1*: Maintenance Agent checks P-102 real-time temp (IoT) and SAP history.
+    - *Task 2*: RCA Agent finds SOP and P&ID diagrams (Graph/Vector).
+4. **Execution**: Worker agents execute tasks in parallel.
+5. **Synthesis**: Supervisor synthesizes: "Temp is 95C (IoT). Last maintenance 2 years ago (SAP). SOP suggests replacing seal (Vector/Graph)."
+6. **Validation**: Critic Agent verifies citations.
+7. **Action Draft**: Action Engine drafts a SAP Work Order via Tool Calling.
+8. **Approval**: Returns to User with HITL prompt: "Approve Work Order Creation?"
+
+---
+
+## 🛠️ Project Structure
+*   `/backend` - Python environment (Agent Swarms, Knowledge Graph schema, Ingestion Pipeline)
+*   `/frontend` - Next.js (React) modern web application with Glassmorphic UI
+
