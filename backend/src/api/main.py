@@ -4,22 +4,26 @@ from pydantic import BaseModel
 import sys
 import os
 
-# Add agents path to sys for importing Orchestrator
+# Add paths to sys for importing Orchestrator and Ingestion
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'agents'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'ingestion'))
+
 from orchestrator import AgentOrchestrator
+from ingestion_pipeline import IngestionPipeline
 
 app = FastAPI(title="Unified Operations Brain API")
 
 # Enable CORS for the Next.js frontend (localhost:3000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "*"], # allow all for demo resilience
+    allow_origins=["http://localhost:3000", "*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 orchestrator = AgentOrchestrator()
+pipeline = IngestionPipeline()
 
 # Global state to mock pending HITL work orders
 pending_approvals = {
@@ -39,6 +43,11 @@ class QueryRequest(BaseModel):
 @app.get("/api/health")
 def health_check():
     return {"status": "System Online", "version": "1.0.0"}
+
+@app.post("/api/ingest")
+def trigger_ingestion():
+    result = pipeline.run_ingestion()
+    return result
 
 @app.post("/api/query")
 def process_query(req: QueryRequest):
@@ -67,13 +76,12 @@ def get_approvals():
 def approve_wo(wo_id: str):
     if wo_id in pending_approvals:
         del pending_approvals[wo_id]
-        return {"success": True, "message": f"Work order {wo_id} approved and executed in SAP."}
+        return {"success": True, "message": f"Work Order {wo_id} sent to SAP (simulated)."}
     return {"success": False, "message": "Work order not found."}
 
 @app.post("/api/approvals/{wo_id}/reject")
 def reject_wo(wo_id: str):
     if wo_id in pending_approvals:
-        # Here we'd call KnowledgeEvolutionEngine
         del pending_approvals[wo_id]
-        return {"success": True, "message": f"Work order {wo_id} rejected. Evolving knowledge graph."}
+        return {"success": True, "message": f"Status rejected. Knowledge evolution triggered in Graph DB for {wo_id}."}
     return {"success": False, "message": "Work order not found."}

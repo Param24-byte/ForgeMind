@@ -132,6 +132,12 @@ h1, h2, h3, h4 {
   gap: 1.5rem;
 }
 
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Micro-animations */
 @keyframes pulse {
   0% { opacity: 0.8; }

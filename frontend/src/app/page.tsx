@@ -11,14 +11,34 @@ export default function Home() {
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [toast, setToast] = useState<{message: string, type: string} | null>(null);
 
-  // Fetch pending work orders on mount
   useEffect(() => {
     fetch(`${API_BASE}/api/approvals`)
       .then(res => res.json())
       .then(data => setPendingApprovals(data.pending_approvals))
       .catch(err => console.error("Failed to load approvals", err));
   }, []);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  const handleIngest = async () => {
+    showToast('Ingesting SOPs and parsing diagrams...', 'warning');
+    try {
+      const res = await fetch(`${API_BASE}/api/ingest`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+      } else {
+        showToast(data.message, 'error');
+      }
+    } catch (e) {
+      showToast('Failed to reach ingestion API.', 'error');
+    }
+  };
 
   const handleSend = async () => {
     if (!inputQuery.trim()) return;
@@ -36,50 +56,69 @@ export default function Home() {
       });
       const data = await res.json();
       
-      const botMsg = { 
-        sender: data.agent_name || 'AI System', 
-        text: data.diagnosis,
-        confidence: data.confidence,
-        criticPassed: data.critic_passed,
-        citations: data.citations
-      };
-      setChatHistory(prev => [...prev, botMsg]);
+      // Artificial delay for "agentic" feel
+      setTimeout(async () => {
+        const botMsg = { 
+          sender: data.agent_name || 'AI System', 
+          text: data.diagnosis,
+          confidence: data.confidence,
+          criticPassed: data.critic_passed,
+          citations: data.citations,
+          trace: data.trace
+        };
+        setChatHistory(prev => [...prev, botMsg]);
+        setIsTyping(false);
 
-      // Refresh pending approvals in case a new one was drafted
-      if (data.draft_work_order) {
-        const approvalsRes = await fetch(`${API_BASE}/api/approvals`);
-        const approvalsData = await approvalsRes.json();
-        setPendingApprovals(approvalsData.pending_approvals);
-      }
+        if (data.draft_work_order) {
+          const approvalsRes = await fetch(`${API_BASE}/api/approvals`);
+          const approvalsData = await approvalsRes.json();
+          setPendingApprovals(approvalsData.pending_approvals);
+        }
+      }, 1200);
+
     } catch (err) {
-      setChatHistory(prev => [...prev, { sender: 'System Error', text: 'Failed to connect to the backend API.' }]);
-    } finally {
       setIsTyping(false);
+      setChatHistory(prev => [...prev, { sender: 'System Error', text: 'Failed to connect to the backend API.' }]);
     }
   };
 
   const handleAction = async (wo_id: string, action: 'approve' | 'reject') => {
     try {
-      await fetch(`${API_BASE}/api/approvals/${wo_id}/${action}`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/approvals/${wo_id}/${action}`, { method: 'POST' });
+      const data = await res.json();
       setPendingApprovals(prev => prev.filter(wo => wo.id !== wo_id));
+      showToast(data.message, action === 'approve' ? 'success' : 'warning');
     } catch (err) {
-      console.error("Action failed", err);
+      showToast("Failed to execute action.", 'error');
     }
   };
 
   return (
     <main className="container">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
+          background: toast.type === 'error' ? 'var(--accent-critical)' : toast.type === 'warning' ? 'var(--accent-warning)' : 'var(--accent-success)',
+          color: toast.type === 'warning' ? '#000' : '#fff',
+          padding: '1rem 2rem', borderRadius: 'var(--radius-sm)', fontWeight: 'bold',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.5)', transition: 'all 0.3s ease'
+        }}>
+          {toast.message}
+        </div>
+      )}
+
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '0.2rem' }}>Unified Operations Brain</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Industrial Knowledge Intelligence Platform</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="btn-secondary" onClick={handleIngest}>⚙️ Ingest Data</button>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             <span className="status-dot status-success animate-pulse"></span>
-            System Online (API Connected)
+            Online
           </span>
-          <button className="btn-secondary">Settings</button>
         </div>
       </header>
 
@@ -89,16 +128,16 @@ export default function Home() {
           <h2>Expert Knowledge Copilot</h2>
           
           <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {chatHistory.map((msg, idx) => (
+            {chatHistory.map((msg: any, idx: number) => (
               <div key={idx} style={{ 
                 alignSelf: msg.sender.includes('Operator') ? 'flex-start' : 'flex-end', 
                 background: msg.sender.includes('Operator') ? 'rgba(255,255,255,0.05)' : 'rgba(0,240,255,0.1)', 
                 border: msg.sender.includes('Operator') ? 'none' : '1px solid var(--glass-border)',
                 padding: '1rem', 
                 borderRadius: 'var(--radius-md)', 
-                maxWidth: '85%' 
+                maxWidth: '90%' 
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '1rem' }}>
                   <span style={{ fontSize: '0.9rem', color: msg.sender.includes('Operator') ? 'var(--text-secondary)' : 'var(--accent-cyan)', fontWeight: 'bold' }}>
                     {msg.sender}
                   </span>
@@ -120,13 +159,28 @@ export default function Home() {
                 )}
 
                 {msg.citations && msg.citations.length > 0 && (
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
                     {msg.citations.map((cit: any, i: number) => (
                       <span key={i} style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
                         {cit.type === 'graph' ? '🔗 Graph: ' : '📄 Vector: '}{cit.text}
                       </span>
                     ))}
                   </div>
+                )}
+
+                {msg.trace && (
+                  <details style={{ fontSize: '0.8rem', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
+                    <summary style={{ cursor: 'pointer', color: 'var(--text-secondary)', userSelect: 'none' }}>View Agent Trace</summary>
+                    <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      {msg.trace.map((t: any, i: number) => (
+                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '120px 1fr 50px', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.2rem' }}>
+                          <span style={{ color: 'var(--accent-cyan)' }}>{t.step}</span>
+                          <span style={{ color: 'var(--text-muted)' }}>{t.detail}</span>
+                          <span style={{ color: 'var(--text-secondary)', textAlign: 'right' }}>{t.time}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
                 )}
               </div>
             ))}
@@ -176,9 +230,9 @@ export default function Home() {
                     <span style={{ color: 'var(--text-muted)' }}>Generated By:</span><span>{wo.GeneratedBy}</span>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                    <button className="btn-primary" style={{ flex: 1 }} onClick={() => handleAction(wo.id, 'approve')}>Approve & Execute</button>
-                    <button className="btn-secondary" style={{ flex: 1, borderColor: 'var(--accent-critical)', color: 'var(--accent-critical)' }} onClick={() => handleAction(wo.id, 'reject')}>Reject (Evolve)</button>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+                    <button className="btn-primary" style={{ flex: 1, minWidth: '120px' }} onClick={() => handleAction(wo.id, 'approve')}>Approve & Execute</button>
+                    <button className="btn-secondary" style={{ flex: 1, minWidth: '120px', borderColor: 'var(--accent-critical)', color: 'var(--accent-critical)' }} onClick={() => handleAction(wo.id, 'reject')}>Reject (Evolve)</button>
                   </div>
                 </div>
               ))
