@@ -1,0 +1,51 @@
+{
+    "assets": [
+        {
+            "asset_id": "P-102",
+            "name": "Main Cooling Water Pump",
+            "type": "Centrifugal Pump",
+            "location": "Cooling Unit B",
+            "manufacturer": "Flowserve"
+        },
+        {
+            "asset_id": "V-991",
+            "name": "Discharge Control Valve",
+            "type": "Control Valve",
+            "location": "Cooling Unit B",
+            "manufacturer": "Emerson"
+        }
+    ],
+    "documents": [
+        {
+            "doc_id": "DOC-SOP-102",
+            "title": "Centrifugal Pump P-102 Standard Operating Procedure",
+            "doc_type": "SOP",
+            "last_updated": "2025-01-15T00:00:00",
+            "version": "v2.1"
+        },
+        {
+            "doc_id": "DOC-MAN-991",
+            "title": "Emerson Control Valve Maintenance Manual",
+            "doc_type": "Manual",
+            "last_updated": "2023-06-10T00:00:00",
+            "version": "v1.0"
+        }
+    ],
+    "personnel": [
+        {
+            "employee_id": "EMP-4421",
+            "name": "John Doe",
+            "role": "Senior Maintenance Technician",
+            "certification_level": "Level 3 - Hydraulics"
+        }
+    ],
+    "maintenance_events": [
+        {
+            "event_id": "EVT-2026-001",
+            "work_order_id": "WO-88123",
+            "date": "2026-05-10T00:00:00",
+            "issue_description": "High vibration detected on P-102 bearing.",
+            "resolution": "Replaced drive end bearing and realigned pump shaft."
+        }
+    ]
+}
