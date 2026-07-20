@@ -149,11 +149,17 @@ graph LR
 ## 🎮 Live Demo Runbook
 
 ### 1. Boot the Platform
-We have provided a single PowerShell script to boot both the FastAPI backend and the Next.js frontend simultaneously:
-```powershell
-.\start-demo.ps1
-```
-*Note: If you prefer manual startup, run `uvicorn src.api.main:app --reload` in `/backend` and `npm run dev` in `/frontend`.*
+To start the demo, you will need to run the backend and frontend separately:
+
+1. **Backend**: Open a terminal in the `backend` directory and run:
+   ```bash
+   uvicorn src.api.main:app --reload
+   ```
+
+2. **Frontend**: Open a second terminal in the `frontend` directory and run:
+   ```bash
+   npm run dev
+   ```
 
 ### 2. The 3 Golden Demo Queries
 Once the UI is loaded at `http://localhost:3000`, test the Semantic Router and Agent Swarm by pasting these exact queries into the Expert Knowledge Copilot:

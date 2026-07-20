@@ -25,8 +25,8 @@ class AgentOrchestrator:
         self.critic = CriticAgent(self.mock_file)
 
     def _extract_asset_id(self, query: str) -> str:
-        match = re.search(r'[A-Z]-\d+', query)
-        return match.group(0) if match else "UNKNOWN_ASSET"
+        match = re.search(r'[a-zA-Z]-\d+', query)
+        return match.group(0).upper() if match else "UNKNOWN_ASSET"
 
     def process_query(self, query: str) -> dict:
         trace_logs = []

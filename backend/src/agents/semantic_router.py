@@ -25,7 +25,7 @@ class SemanticRouter:
         # Mock keyword heuristics to simulate semantic similarity routing
         self.rca_keywords = ["why", "broke", "overheating", "failed", "vibration", "cause", "leak"]
         self.compliance_keywords = ["osha", "iso", "regulation", "safe", "permit", "allowed", "audit"]
-        self.maintenance_keywords = ["schedule", "when was", "history", "order", "replace", "parts"]
+        self.maintenance_keywords = ["schedule", "when was", "when is", "history", "order", "replace", "parts", "maintenance"]
         
     def route_query(self, query: str) -> RouteDecision:
         query_lower = query.lower()

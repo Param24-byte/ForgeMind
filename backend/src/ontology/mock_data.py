@@ -1,6 +1,9 @@
 import json
 from datetime import datetime
-from schema import AssetNode, DocumentNode, MaintenanceEventNode, PersonnelNode
+try:
+    from .schema import AssetNode, DocumentNode, MaintenanceEventNode, PersonnelNode
+except ImportError:
+    from schema import AssetNode, DocumentNode, MaintenanceEventNode, PersonnelNode
 
 def generate_mock_data():
     # 1. Assets (Equipment)
