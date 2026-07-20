@@ -1,12 +1,12 @@
 import os
 import re
 import time
-from semantic_router import SemanticRouter, AgentRoute
-from rca_agent import RootCauseAnalysisAgent
-from critic_agent import CriticAgent
-from compliance_agent import ComplianceAgent
-from maintenance_agent import MaintenanceAgent
-from general_copilot import GeneralCopilotAgent
+from src.agents.semantic_router import SemanticRouter, AgentRoute
+from src.agents.rca_agent import RootCauseAnalysisAgent
+from src.agents.critic_agent import CriticAgent
+from src.agents.compliance_agent import ComplianceAgent
+from src.agents.maintenance_agent import MaintenanceAgent
+from src.agents.general_copilot import GeneralCopilotAgent
 
 class AgentOrchestrator:
     """

@@ -12,8 +12,16 @@ export default function Home() {
   const [isTyping, setIsTyping] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [toast, setToast] = useState<{message: string, type: string} | null>(null);
+  const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
+    // Check Health
+    fetch(`${API_BASE}/api/health`)
+      .then(res => res.json())
+      .then(data => setIsOnline(data.status === "System Online"))
+      .catch(() => setIsOnline(false));
+
+    // Load Approvals
     fetch(`${API_BASE}/api/approvals`)
       .then(res => res.json())
       .then(data => setPendingApprovals(data.pending_approvals))
@@ -115,9 +123,9 @@ export default function Home() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button className="btn-secondary" onClick={handleIngest}>⚙️ Ingest Data</button>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            <span className="status-dot status-success animate-pulse"></span>
-            Online
+          <span style={{ fontSize: '0.9rem', color: isOnline ? 'var(--text-muted)' : 'var(--accent-critical)' }}>
+            <span className={`status-dot ${isOnline ? 'status-success animate-pulse' : 'status-critical'}`}></span>
+            {isOnline ? 'Online (API Connected)' : 'Offline (API Down)'}
           </span>
         </div>
       </header>

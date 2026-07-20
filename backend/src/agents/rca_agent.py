@@ -2,9 +2,7 @@ import json
 import os
 import sys
 
-# Need ActionEngine to draft WO
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'governance'))
-from action_engine import ActionEngine
+from src.governance.action_engine import ActionEngine
 
 class RootCauseAnalysisAgent:
     """

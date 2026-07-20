@@ -6,12 +6,9 @@ from pydantic import BaseModel
 import sys
 import os
 
-# Add paths to sys for importing Orchestrator and Ingestion
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'agents'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'ingestion'))
-
-from orchestrator import AgentOrchestrator
-from ingestion_pipeline import IngestionPipeline
+from src.agents.orchestrator import AgentOrchestrator
+from src.ingestion.ingestion_pipeline import IngestionPipeline
+from src.governance.action_engine import KnowledgeEvolutionEngine
 
 app = FastAPI(title="Unified Operations Brain API")
 
@@ -26,6 +23,7 @@ app.add_middleware(
 
 orchestrator = AgentOrchestrator()
 pipeline = IngestionPipeline()
+evolution_engine = KnowledgeEvolutionEngine()
 
 # Global state to mock pending HITL work orders
 pending_approvals = {
@@ -84,6 +82,8 @@ def approve_wo(wo_id: str):
 @app.post("/api/approvals/{wo_id}/reject")
 def reject_wo(wo_id: str):
     if wo_id in pending_approvals:
+        asset = pending_approvals[wo_id].get("AssetID", "Unknown")
+        evolution_engine.process_rejection(asset, "Supervisor rejected AI action.")
         del pending_approvals[wo_id]
         return {"success": True, "message": f"Status rejected. Knowledge evolution triggered in Graph DB for {wo_id}."}
     return {"success": False, "message": "Work order not found."}
