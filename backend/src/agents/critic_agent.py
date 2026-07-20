@@ -19,6 +19,8 @@ class CriticAgent:
         note = "All claims trace back directly to the provided chunks and Graph nodes."
         
         # Artificial test for hallucination
+        # WARNING: This is a scripted demo beat, not real validation!
+        # Do not rely on this single hardcoded string match as a safety net if extending the RCA logic.
         if "replace the entire pump" in answer_text.lower():
             is_valid = False
             note = "HALLUCINATION DETECTED: The SOP only recommends inspecting the bearing."
