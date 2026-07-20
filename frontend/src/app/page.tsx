@@ -1,4 +1,72 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export default function Home() {
+  const [chatHistory, setChatHistory] = useState([
+    { sender: 'Operator (10:42 AM)', text: 'Platform online. How can I assist you with your industrial assets?' }
+  ]);
+  const [inputQuery, setInputQuery] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+
+  // Fetch pending work orders on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/api/approvals`)
+      .then(res => res.json())
+      .then(data => setPendingApprovals(data.pending_approvals))
+      .catch(err => console.error("Failed to load approvals", err));
+  }, []);
+
+  const handleSend = async () => {
+    if (!inputQuery.trim()) return;
+    
+    const userMsg = { sender: 'Operator (You)', text: inputQuery };
+    setChatHistory(prev => [...prev, userMsg]);
+    setInputQuery('');
+    setIsTyping(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: userMsg.text })
+      });
+      const data = await res.json();
+      
+      const botMsg = { 
+        sender: data.agent_name || 'AI System', 
+        text: data.diagnosis,
+        confidence: data.confidence,
+        criticPassed: data.critic_passed,
+        citations: data.citations
+      };
+      setChatHistory(prev => [...prev, botMsg]);
+
+      // Refresh pending approvals in case a new one was drafted
+      if (data.draft_work_order) {
+        const approvalsRes = await fetch(`${API_BASE}/api/approvals`);
+        const approvalsData = await approvalsRes.json();
+        setPendingApprovals(approvalsData.pending_approvals);
+      }
+    } catch (err) {
+      setChatHistory(prev => [...prev, { sender: 'System Error', text: 'Failed to connect to the backend API.' }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleAction = async (wo_id: string, action: 'approve' | 'reject') => {
+    try {
+      await fetch(`${API_BASE}/api/approvals/${wo_id}/${action}`, { method: 'POST' });
+      setPendingApprovals(prev => prev.filter(wo => wo.id !== wo_id));
+    } catch (err) {
+      console.error("Action failed", err);
+    }
+  };
+
   return (
     <main className="container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -9,7 +77,7 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             <span className="status-dot status-success animate-pulse"></span>
-            System Online
+            System Online (API Connected)
           </span>
           <button className="btn-secondary">Settings</button>
         </div>
@@ -17,65 +85,104 @@ export default function Home() {
 
       <div className="grid-2">
         {/* Left Column: Expert Knowledge Copilot */}
-        <section className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
+        <section className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '75vh' }}>
           <h2>Expert Knowledge Copilot</h2>
           
-          {/* Chat History Area */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: 'var(--radius-md)', maxWidth: '85%' }}>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Operator (10:42 AM)</p>
-              <p>Why is Pump P-102 overheating and vibrating so much?</p>
-            </div>
-            
-            <div style={{ alignSelf: 'flex-end', background: 'rgba(0,240,255,0.1)', border: '1px solid var(--glass-border)', padding: '1rem', borderRadius: 'var(--radius-md)', maxWidth: '85%' }}>
-              <p style={{ fontSize: '0.9rem', color: 'var(--accent-cyan)', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
-                <span>Root Cause Analysis Agent</span>
-                <span style={{ color: 'var(--accent-success)' }}>98% Confidence</span>
-              </p>
-              <p style={{ marginBottom: '1rem' }}>Based on the SOP and historical maintenance logs, it is highly probable the shaft has come out of alignment. I have drafted a Work Order for inspection.</p>
-              
-              {/* Citation Badges */}
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>📄 SOP: P-102 Manual (Page 2)</span>
-                <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>🔗 Graph: Event EVT-2026-001</span>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {chatHistory.map((msg, idx) => (
+              <div key={idx} style={{ 
+                alignSelf: msg.sender.includes('Operator') ? 'flex-start' : 'flex-end', 
+                background: msg.sender.includes('Operator') ? 'rgba(255,255,255,0.05)' : 'rgba(0,240,255,0.1)', 
+                border: msg.sender.includes('Operator') ? 'none' : '1px solid var(--glass-border)',
+                padding: '1rem', 
+                borderRadius: 'var(--radius-md)', 
+                maxWidth: '85%' 
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.9rem', color: msg.sender.includes('Operator') ? 'var(--text-secondary)' : 'var(--accent-cyan)', fontWeight: 'bold' }}>
+                    {msg.sender}
+                  </span>
+                  {msg.confidence && (
+                    <span style={{ color: 'var(--accent-success)', fontSize: '0.8rem' }}>
+                      {(msg.confidence * 100).toFixed(0)}% Confidence
+                    </span>
+                  )}
+                </div>
+                
+                <p style={{ marginBottom: '1rem', whiteSpace: 'pre-wrap' }}>{msg.text}</p>
+                
+                {msg.criticPassed !== undefined && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.75rem', background: msg.criticPassed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: msg.criticPassed ? '#10B981' : '#EF4444', padding: '0.2rem 0.5rem', borderRadius: '4px', border: `1px solid ${msg.criticPassed ? '#10B981' : '#EF4444'}` }}>
+                      {msg.criticPassed ? '🛡️ Critic Verified' : '⚠️ Critic Failed'}
+                    </span>
+                  </div>
+                )}
+
+                {msg.citations && msg.citations.length > 0 && (
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {msg.citations.map((cit: any, i: number) => (
+                      <span key={i} style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                        {cit.type === 'graph' ? '🔗 Graph: ' : '📄 Vector: '}{cit.text}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
+            
+            {isTyping && (
+              <div style={{ alignSelf: 'flex-end', padding: '1rem', color: 'var(--accent-cyan)' }}>
+                Agent Swarm is thinking <span className="animate-pulse">...</span>
+              </div>
+            )}
           </div>
 
-          {/* Input Area */}
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
             <input 
               type="text" 
-              placeholder="Ask the platform..." 
+              value={inputQuery}
+              onChange={(e) => setInputQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="E.g. Why is P-102 vibrating? or Is V-450 compliant?" 
               style={{ flex: 1, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', padding: '0.75rem', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+              disabled={isTyping}
             />
-            <button className="btn-primary">Send</button>
+            <button className="btn-primary" onClick={handleSend} disabled={isTyping}>Send</button>
           </div>
         </section>
 
         {/* Right Column: Supervisor Action Dashboard */}
-        <section className="glass-panel" style={{ display: 'flex', flexDirection: 'column' }}>
-          <h2>Supervisor Action Dashboard</h2>
+        <section className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '75vh' }}>
+          <h2>Supervisor Dashboard</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Human-in-the-loop pending approvals</p>
           
-          <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '1.5rem', borderRadius: 'var(--radius-md)', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
-              <span className="status-dot status-warning animate-pulse"></span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--accent-warning)' }}>Pending Review</span>
-            </div>
-            
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-warning)' }}>Draft: SAP Work Order</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '0.5rem', margin: '1rem 0', fontSize: '0.9rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Asset:</span><span>Centrifugal Pump (P-102)</span>
-              <span style={{ color: 'var(--text-muted)' }}>Action:</span><span>Inspect & Realign Drive End Bearing</span>
-              <span style={{ color: 'var(--text-muted)' }}>Priority:</span><span style={{ color: 'var(--accent-critical)' }}>CRITICAL</span>
-              <span style={{ color: 'var(--text-muted)' }}>Generated By:</span><span>RCA Agent Swarm</span>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-              <button className="btn-primary" style={{ flex: 1 }}>Approve & Execute</button>
-              <button className="btn-secondary" style={{ flex: 1, borderColor: 'var(--accent-critical)', color: 'var(--accent-critical)' }}>Reject (Evolve Knowledge)</button>
-            </div>
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {pendingApprovals.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem' }}>No pending actions.</p>
+            ) : (
+              pendingApprovals.map(wo => (
+                <div key={wo.id} style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '1.5rem', borderRadius: 'var(--radius-md)', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+                    <span className="status-dot status-warning animate-pulse"></span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--accent-warning)' }}>Pending Review</span>
+                  </div>
+                  
+                  <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-warning)' }}>Draft: SAP {wo.id}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '0.5rem', margin: '1rem 0', fontSize: '0.9rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Asset:</span><span>{wo.AssetID}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Action:</span><span>{wo.Description}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Priority:</span><span style={{ color: 'var(--accent-critical)' }}>{wo.Priority}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Generated By:</span><span>{wo.GeneratedBy}</span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                    <button className="btn-primary" style={{ flex: 1 }} onClick={() => handleAction(wo.id, 'approve')}>Approve & Execute</button>
+                    <button className="btn-secondary" style={{ flex: 1, borderColor: 'var(--accent-critical)', color: 'var(--accent-critical)' }} onClick={() => handleAction(wo.id, 'reject')}>Reject (Evolve)</button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </div>

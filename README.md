@@ -146,6 +146,32 @@ graph LR
 
 ---
 
+## 🎮 Live Demo Runbook
+
+### 1. Boot the Platform
+We have provided a single PowerShell script to boot both the FastAPI backend and the Next.js frontend simultaneously:
+```powershell
+.\start-demo.ps1
+```
+*Note: If you prefer manual startup, run `uvicorn src.api.main:app --reload` in `/backend` and `npm run dev` in `/frontend`.*
+
+### 2. The 3 Golden Demo Queries
+Once the UI is loaded at `http://localhost:3000`, test the Semantic Router and Agent Swarm by pasting these exact queries into the Expert Knowledge Copilot:
+
+**Query 1: Root Cause Analysis & Action Draft**
+> "Why is P-102 experiencing high vibration and overheating?"
+*   *Expected Behavior*: Routes to **RCA Agent**. Retrieves history (Work Order WO-88123) and SOP from the Graph/Vector DB. Drafts a new SAP Work Order and pushes it to the Supervisor Dashboard on the right.
+
+**Query 2: Compliance Check**
+> "Is V-450 compliant with OSHA safety standards?"
+*   *Expected Behavior*: Routes to **Compliance Agent**. Verifies lockout/tagout procedures under OSHA 1910.212. Note the Critic Badge verifying the citation.
+
+**Query 3: Maintenance Schedule**
+> "When is the next preventative maintenance for T-100?"
+*   *Expected Behavior*: Routes to **Maintenance Agent**. Retrieves the CMMS schedule from the mock graph.
+
+---
+
 ## 🛠️ Project Structure
 *   `/backend` - Python environment (Agent Swarms, Knowledge Graph schema, Ingestion Pipeline)
 *   `/frontend` - Next.js (React) modern web application with Glassmorphic UI

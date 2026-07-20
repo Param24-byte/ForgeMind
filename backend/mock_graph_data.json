@@ -4,39 +4,31 @@
             "asset_id": "P-102",
             "name": "Main Cooling Water Pump",
             "type": "Centrifugal Pump",
-            "location": "Cooling Unit B",
-            "manufacturer": "Flowserve"
+            "location": "Cooling Unit B"
         },
         {
-            "asset_id": "V-991",
+            "asset_id": "V-450",
             "name": "Discharge Control Valve",
             "type": "Control Valve",
-            "location": "Cooling Unit B",
-            "manufacturer": "Emerson"
+            "location": "Cooling Unit B"
+        },
+        {
+            "asset_id": "T-100",
+            "name": "Primary Storage Tank",
+            "type": "Storage Tank",
+            "location": "Sector 7G"
         }
     ],
     "documents": [
         {
             "doc_id": "DOC-SOP-102",
             "title": "Centrifugal Pump P-102 Standard Operating Procedure",
-            "doc_type": "SOP",
-            "last_updated": "2025-01-15T00:00:00",
-            "version": "v2.1"
+            "doc_type": "SOP"
         },
         {
-            "doc_id": "DOC-MAN-991",
-            "title": "Emerson Control Valve Maintenance Manual",
-            "doc_type": "Manual",
-            "last_updated": "2023-06-10T00:00:00",
-            "version": "v1.0"
-        }
-    ],
-    "personnel": [
-        {
-            "employee_id": "EMP-4421",
-            "name": "John Doe",
-            "role": "Senior Maintenance Technician",
-            "certification_level": "Level 3 - Hydraulics"
+            "doc_id": "DOC-MAN-450",
+            "title": "Emerson Control Valve V-450 Manual",
+            "doc_type": "Manual"
         }
     ],
     "maintenance_events": [
@@ -44,8 +36,25 @@
             "event_id": "EVT-2026-001",
             "work_order_id": "WO-88123",
             "date": "2026-05-10T00:00:00",
+            "asset_id": "P-102",
             "issue_description": "High vibration detected on P-102 bearing.",
             "resolution": "Replaced drive end bearing and realigned pump shaft."
+        },
+        {
+            "event_id": "EVT-2026-002",
+            "work_order_id": "WO-88124",
+            "date": "2026-06-15T00:00:00",
+            "asset_id": "V-450",
+            "issue_description": "V-450 fails to fully close during emergency shutdown drill.",
+            "resolution": "Actuator seal replaced. Calibrated stroke length."
+        },
+        {
+            "event_id": "EVT-2026-003",
+            "work_order_id": "WO-88125",
+            "date": "2025-11-20T00:00:00",
+            "asset_id": "T-100",
+            "issue_description": "Minor corrosion detected on exterior base of T-100.",
+            "resolution": "Sandblasted and applied anti-corrosive industrial coating."
         }
     ]
 }
