@@ -10,19 +10,21 @@ class RootCauseAnalysisAgent:
     It simulates querying the Neo4j Knowledge Graph to find maintenance history,
     and querying the Vector DB to find relevant SOPs and manuals.
     """
-    def __init__(self, mock_data_path: str):
-        self.mock_data_path = mock_data_path
+    def __init__(self, neo4j_client):
+        self.neo4j_client = neo4j_client
         self.action_engine = ActionEngine()
         
     def _mock_graph_retrieval(self, asset_id: str) -> dict:
-        """Simulates a Cypher query to retrieve maintenance history for an asset."""
+        """Executes a Cypher query to retrieve maintenance history for an asset."""
         print(f"[RCA Agent] Traversing Graph: MATCH (e:MaintenanceEvent)-[:OCCURRED_ON]->(a:Asset {{asset_id: '{asset_id}'}}) RETURN e")
-        with open(self.mock_data_path, 'r') as f:
-            data = json.load(f)
-            
-        # Match events by asset_id explicitly if present, or substring on issue description
-        history = [e for e in data.get('maintenance_events', []) if asset_id in e.get('issue_description', '') or asset_id == e.get('asset_id')]
-        return history[0] if history else None
+        
+        results = self.neo4j_client.execute_read(
+            "MATCH (e:MaintenanceEvent)-[:OCCURRED_ON]->(a:Asset {asset_id: $asset_id}) RETURN e",
+            {"asset_id": asset_id}
+        )
+        if results:
+            return results[0].get('e')
+        return None
 
     def _mock_vector_retrieval(self, query: str) -> list[str]:
         """Simulates a semantic search in Milvus/Pinecone."""

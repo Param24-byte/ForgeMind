@@ -7,8 +7,8 @@ An enterprise-grade, agentic AI platform designed to ingest heterogeneous indust
 *Note: The current version is a functional prototype. Certain enterprise infrastructure components are simulated and slated for future full integration.*
 
 1. **Hybrid Graph-RAG**:
-   - *Current Prototype:* Uses local mocked JSON graph data for entity and relationship retrieval.
-   - *Future Roadmap:* Full integration with an Industrial Knowledge Graph (Neo4j) and Vector DB based on the ISA-95 ontology.
+   - *Current Prototype:* Full integration with an Industrial Knowledge Graph (Neo4j Aura) for entity and relationship retrieval.
+   - *Future Roadmap:* Full integration with a Vector DB based on the ISA-95 ontology.
 2. **Agentic Swarm Orchestration**: 
    - *Current Prototype:* Fully active Semantic Router delegating tasks to specialized RCA, Compliance, and Maintenance agents.
 3. **Action Engine (Human-in-the-Loop)**: 

@@ -15,15 +15,16 @@ class AgentOrchestrator:
     gets a drafted response, and passes it through the Critic for validation.
     """
     def __init__(self):
-        self.mock_file = os.path.join(os.path.dirname(__file__), '..', '..', 'mock_graph_data.json')
+        from src.ontology.neo4j_client import Neo4jClient
+        self.neo4j_client = Neo4jClient()
         self.router = SemanticRouter()
         
-        self.rca_agent = RootCauseAnalysisAgent(self.mock_file)
-        self.compliance_agent = ComplianceAgent(self.mock_file)
-        self.maintenance_agent = MaintenanceAgent(self.mock_file)
+        self.rca_agent = RootCauseAnalysisAgent(self.neo4j_client)
+        self.compliance_agent = ComplianceAgent(self.neo4j_client)
+        self.maintenance_agent = MaintenanceAgent(self.neo4j_client)
         self.general_copilot = GeneralCopilotAgent()
         
-        self.critic = CriticAgent(self.mock_file)
+        self.critic = CriticAgent(self.neo4j_client)
 
     def _extract_asset_id(self, query: str) -> str:
         match = re.search(r'[a-zA-Z]-\d+', query)

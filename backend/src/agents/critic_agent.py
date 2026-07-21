@@ -7,11 +7,16 @@ class CriticAgent:
     Its job is to review the proposed answer from a Worker Agent
     and ensure that every claim is explicitly backed up by the retrieved context.
     """
-    def __init__(self, mock_data_path: str):
-        self.mock_data_path = mock_data_path
+    def __init__(self, neo4j_client):
+        self.neo4j_client = neo4j_client
 
     def validate_answer(self, agent_dict: dict) -> dict:
         print("\n--- [Critic Agent] Validating Output ---")
+        
+        # Verify connection and perform a simple check against the graph
+        node_count = self.neo4j_client.execute_read("MATCH (n) RETURN count(n) AS count")
+        if node_count:
+            print(f"-> Graph accessible. Total nodes: {node_count[0]['count']}")
         
         answer_text = agent_dict.get("diagnosis", "")
         
