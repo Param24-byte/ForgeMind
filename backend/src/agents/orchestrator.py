@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import difflib
 from src.agents.semantic_router import SemanticRouter, AgentRoute
 from src.agents.rca_agent import RootCauseAnalysisAgent
 from src.agents.critic_agent import CriticAgent
@@ -28,9 +29,36 @@ class AgentOrchestrator:
         match = re.search(r'[a-zA-Z]-\d+', query)
         return match.group(0).upper() if match else "UNKNOWN_ASSET"
 
+    def _correct_typos(self, query: str) -> str:
+        vocab = [
+            "vibration", "overheating", "compliance", "maintenance", 
+            "preventative", "pump", "valve", "tank", "OSHA", "standards",
+            "experiencing", "safety", "schedule", "preventive"
+        ]
+        words = query.split()
+        corrected_words = []
+        for word in words:
+            clean_word = re.sub(r'[^\w\-]', '', word)
+            if len(clean_word) < 4 or re.match(r'[A-Za-z]-\d+', clean_word):
+                corrected_words.append(word)
+                continue
+
+            matches = difflib.get_close_matches(clean_word.lower(), [v.lower() for v in vocab], n=1, cutoff=0.75)
+            if matches:
+                matched_word = next(v for v in vocab if v.lower() == matches[0])
+                corrected_words.append(word.replace(clean_word, matched_word))
+            else:
+                corrected_words.append(word)
+        return " ".join(corrected_words)
+
     def process_query(self, query: str) -> dict:
         trace_logs = []
         start_time = time.time()
+        
+        original_query = query
+        query = self._correct_typos(query)
+        if query != original_query:
+            trace_logs.append({"step": "Typo Correction", "detail": f"Corrected to: '{query}'", "time": "0.01s"})
         
         asset_id = self._extract_asset_id(query)
         trace_logs.append({"step": "Query Processing", "detail": f"Extracted Asset ID: {asset_id}", "time": "0.01s"})
