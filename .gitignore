@@ -67,3 +67,4 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+backend/uploaded_document.txt

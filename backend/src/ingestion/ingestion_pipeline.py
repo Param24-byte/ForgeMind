@@ -1,5 +1,10 @@
 import json
 import os
+import io
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
 
 class IngestionPipeline:
     def __init__(self):
@@ -22,9 +27,23 @@ class IngestionPipeline:
                     return {"success": True, "message": f"Uploaded {filename}: {num_assets} assets and {num_chunks} document chunks successfully upserted into Graph and Vector DBs."}
                 else:
                     text_file_path = os.path.join(os.path.dirname(__file__), '..', '..', 'uploaded_document.txt')
-                    with open(text_file_path, 'wb') as f:
-                        f.write(uploaded_content)
-                    return {"success": True, "message": f"Uploaded {filename}: Processed {len(uploaded_content)} bytes of data."}
+                    
+                    extracted_text = ""
+                    # Check if it's a PDF (either by extension or magic bytes)
+                    if PdfReader and ((filename and filename.lower().endswith('.pdf')) or b"%PDF" in uploaded_content[:10]):
+                        try:
+                            reader = PdfReader(io.BytesIO(uploaded_content))
+                            for page in reader.pages:
+                                extracted_text += page.extract_text() + "\n"
+                        except Exception as e:
+                            print(f"Failed to parse PDF: {e}")
+                            extracted_text = uploaded_content.decode('utf-8', errors='ignore')
+                    else:
+                        extracted_text = uploaded_content.decode('utf-8', errors='ignore')
+                        
+                    with open(text_file_path, 'w', encoding='utf-8') as f:
+                        f.write(extracted_text)
+                    return {"success": True, "message": f"Uploaded {filename}: Extracted and saved text."}
             else:
                 with open(self.mock_file, 'r') as f:
                     data = json.load(f)
