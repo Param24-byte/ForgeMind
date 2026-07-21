@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function Home() {
-  const [chatHistory, setChatHistory] = useState([
-    { sender: 'Operator (10:42 AM)', text: 'Platform online. How can I assist you with your industrial assets?' }
-  ]);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
@@ -15,6 +13,11 @@ export default function Home() {
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setChatHistory([
+      { sender: `Operator (${now})`, text: 'Platform online. How can I assist you with your industrial assets?' }
+    ]);
+
     // Check Health
     fetch(`${API_BASE}/api/health`)
       .then(res => res.json())
@@ -33,10 +36,25 @@ export default function Home() {
     setTimeout(() => setToast(null), 5000);
   };
 
-  const handleIngest = async () => {
-    showToast('Ingesting SOPs and parsing diagrams...', 'warning');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleIngestClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    showToast(`Uploading and processing ${file.name}...`, 'warning');
+    const formData = new FormData();
+    formData.append('file', file);
+
     try {
-      const res = await fetch(`${API_BASE}/api/ingest`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/ingest`, { 
+        method: 'POST',
+        body: formData
+      });
       const data = await res.json();
       if (data.success) {
         showToast(data.message, 'success');
@@ -46,12 +64,18 @@ export default function Home() {
     } catch (e) {
       showToast('Failed to reach ingestion API.', 'error');
     }
+    
+    // clear the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSend = async () => {
     if (!inputQuery.trim()) return;
     
-    const userMsg = { sender: 'Operator (You)', text: inputQuery };
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsg = { sender: `Operator (You) - ${now}`, text: inputQuery };
     setChatHistory(prev => [...prev, userMsg]);
     setInputQuery('');
     setIsTyping(true);
@@ -122,11 +146,13 @@ export default function Home() {
           <p style={{ color: 'var(--text-secondary)' }}>Industrial Knowledge Intelligence Platform</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn-secondary" onClick={handleIngest}>⚙️ Ingest Data</button>
-          <span style={{ fontSize: '0.9rem', color: isOnline ? 'var(--text-muted)' : 'var(--accent-critical)' }}>
-            <span className={`status-dot ${isOnline ? 'status-success animate-pulse' : 'status-critical'}`}></span>
-            {isOnline ? 'Online (API Connected)' : 'Offline (API Down)'}
-          </span>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            style={{ display: 'none' }} 
+          />
+          <button className="btn-secondary" onClick={handleIngestClick}>⚙️ Ingest Data</button>
         </div>
       </header>
 

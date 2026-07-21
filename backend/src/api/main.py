@@ -1,5 +1,5 @@
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -45,8 +45,9 @@ def health_check():
     return {"status": "System Online", "version": "1.0.0"}
 
 @app.post("/api/ingest")
-def trigger_ingestion():
-    result = pipeline.run_ingestion()
+async def trigger_ingestion(file: UploadFile = File(...)):
+    content = await file.read()
+    result = pipeline.run_ingestion(uploaded_content=content, filename=file.filename)
     return result
 
 @app.post("/api/query")

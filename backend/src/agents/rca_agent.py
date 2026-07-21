@@ -27,6 +27,20 @@ class RootCauseAnalysisAgent:
     def _mock_vector_retrieval(self, query: str) -> list[str]:
         """Simulates a semantic search in Milvus/Pinecone."""
         print(f"[RCA Agent] Vector Search: Retrieving chunks matching '{query}'")
+        text_file_path = os.path.join(os.path.dirname(__file__), '..', '..', 'uploaded_document.txt')
+        if os.path.exists(text_file_path):
+            try:
+                with open(text_file_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                query_words = set(w.lower() for w in query.split() if len(w) > 3)
+                results = []
+                for line in lines:
+                    if any(w in line.lower() for w in query_words):
+                        results.append(line.strip())
+                return results[:3] if results else ["No relevant information found in the uploaded document."]
+            except Exception as e:
+                print(f"Error reading uploaded doc: {e}")
+                
         return [
             "Critical warning: Ensure cooling water flow is above 50 GPM before starting.",
             "If bearing vibration is high, inspect for shaft misalignment and replace drive end bearing."
@@ -52,9 +66,11 @@ class RootCauseAnalysisAgent:
         
         diagnosis = (
             f"DIAGNOSIS REPORT FOR {asset_id}:\n"
-            f"Based on the reported symptom '{symptom}', the Vector DB SOP states that high vibration "
-            f"often indicates shaft misalignment. \n\n"
+            f"Based on the reported symptom '{symptom}', the retrieved procedural context states:\n"
         )
+        for chunk in sop_chunks:
+            diagnosis += f"- {chunk}\n"
+        diagnosis += "\n"
         
         if history:
             diagnosis += (
