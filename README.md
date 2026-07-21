@@ -3,16 +3,27 @@
 
 An enterprise-grade, agentic AI platform designed to ingest heterogeneous industrial documents (P&IDs, SOPs, Maintenance Logs, IoT Data) and convert them into a continuously evolving operational knowledge system.
 
-## 🚀 Key Innovations
-1. **Hybrid Graph-RAG**: Fuses vector embeddings with an Industrial Knowledge Graph (Neo4j) based on ISA-95 ontology.
-2. **Agentic Swarm Orchestration**: A Semantic Router delegates tasks to specialized RCA, Compliance, and Maintenance agents.
-3. **Action Engine (Human-in-the-Loop)**: AI doesn't just chat; it drafts ERP Work Orders and pauses for human approval.
-4. **Adversarial Critic Validation**: A secondary agent verifies citations against the graph to eliminate hallucinations.
-5. **Time-Series Fusion**: Cross-references static engineering manuals with real-time IoT/SCADA streams.
+## 🚀 Key Innovations (Prototype vs. Roadmap)
+*Note: The current version is a functional prototype. Certain enterprise infrastructure components are simulated and slated for future full integration.*
+
+1. **Hybrid Graph-RAG**:
+   - *Current Prototype:* Uses local mocked JSON graph data for entity and relationship retrieval.
+   - *Future Roadmap:* Full integration with an Industrial Knowledge Graph (Neo4j) and Vector DB based on the ISA-95 ontology.
+2. **Agentic Swarm Orchestration**: 
+   - *Current Prototype:* Fully active Semantic Router delegating tasks to specialized RCA, Compliance, and Maintenance agents.
+3. **Action Engine (Human-in-the-Loop)**: 
+   - *Current Prototype:* AI drafts ERP Work Orders and pauses for a simulated human approval workflow.
+   - *Future Roadmap:* Direct 2-way API integration with ERP/CMMS systems (e.g., SAP, Maximo).
+4. **Adversarial Critic Validation**: 
+   - *Current Prototype:* A secondary agent validates logic against sources to reduce hallucinations.
+5. **Time-Series Fusion**: 
+   - *Current Prototype:* Demonstrates the value of real-time telemetry using simulated mock data.
+   - *Future Roadmap:* Direct integration with Kafka Event Bus and live IoT/SCADA MQTT streams.
 
 ---
 
 ## 🏗️ System Architecture
+*(Note: In the current prototype, external integrations like SAP, Kafka, Neo4j, and MQTT are mocked to demonstrate the agentic capabilities. The architecture below represents the final production state.)*
 
 ### 1. High-Level ASCII Architecture
 ```text
